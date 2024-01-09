@@ -1,83 +1,66 @@
+import java.io.*;
+import java.math.*;
 import java.util.*;
+public class RSA
+{
+    private BigInteger p, q, N, phi, e, d;
+    private int bitLength = 1024;
+    private Random r;
 
-public class RSA {
-    public static int gcd(int m, int n) {
-        while (n != 0) {
-            int r = m % n;
-            m = n;
-            n = r;
-        }
-        return m;
+    public RSA() 
+    {
+        r = new Random();
+
+        p = BigInteger.probablePrime(bitLength, r);
+        q = BigInteger.probablePrime(bitLength, r);
+
+        System.out.println("Prime number p is " + p);
+        System.out.println("Prime number q is " + q);
+
+        N = p.multiply(q);
+        e = BigInteger.probablePrime(bitLength / 2, r);
+        phi = p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE));
+
+        while ( phi.gcd(e).compareTo(BigInteger.ONE) > 0 && e.compareTo(phi) < 0 ) 
+            e = e.add(BigInteger.ONE);
+
+        System.out.println("Public key is " + e);
+        d = e.modInverse(phi);
+        System.out.println("Private key is " + d);
+
     }
 
-    public static int finCoPrime(int phi) {
-        int e = 2;
-        while (e < phi) {
-            if (gcd(e, phi) == 1)
-                return e;
-            e++;
-        }
-        return -1;
+    public static void main(String[] args) throws IOException 
+    {
+        RSA rsa = new RSA();
+
+        Scanner sc = new Scanner (System.in);
+        System.out.println("Enter the plain text: ");
+        String str = sc.nextLine();
+
+        System.out.println("Encrypting string: " + str);
+
+        byte[] encrypted = rsa.encrypt(str.getBytes());
+        byte[] decrypted = rsa.decrypt(encrypted);
+        
+        System.out.println("Encrypted Byte Array: "+Arrays.toString(encrypted));
+        System.out.println();
+        System.out.println("Decrypted Byte Array: " + Arrays.toString(decrypted));
+        
+         String decryptedString = new String(decrypted);
+         System.out.println("Decrypted String: " + decryptedString);
+
     }
 
-    public static int findPrivateKey(int e, int phi) {
-        int d = 0;
-        int k = 1;
-        while (true) {
-            d = (1 + k * phi) / e;
-            if ((d * e) % phi == 1)
-                return d;
-            k++;
-        }
+
+    public byte[] encrypt(byte[] message) 
+    {
+        return (new BigInteger(message)).modPow(e, N).toByteArray();
+    }  
+
+    public byte[] decrypt(byte[] message) 
+    {
+        return (new BigInteger(message)).modPow(d, N).toByteArray();
     }
 
-    public static int modPow(int b, int e, int m) {
-        int res = 1;
-        while (e > 0) {
-            if (e % 2 == 1) {
-                res = (res * b) % m;
-            }
-            e = e / 2;
-            b = (b * b) % m;
-        }
-        return res;
-    }
-
-    public static int[] rsaEncrypt(String ptext, int e, int n) {
-        int[] ctext = new int[ptext.length()];
-        for (int i = 0; i < ptext.length(); i++) {
-            ctext[i] = modPow((int) ptext.charAt(i), e, n);
-        }
-        return ctext;
-    }
-
-    public static String rsaDecrypt(int[] ctext, int d, int n) {
-        StringBuilder ptext = new StringBuilder();
-        for (int i : ctext) {
-            ptext.append((char) modPow(i, d, n));
-        }
-        return ptext.toString();
-    }
-
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        int p = 17;
-        int q = 23;
-        int n = p * q;
-        int phi = (p - 1) * (q - 1);
-        int e = finCoPrime(phi);
-        int d = findPrivateKey(e, phi);
-
-        System.out.print("Enter Plain-Text : ");
-        String Ptext = sc.nextLine();
-        int[] ctext = rsaEncrypt(Ptext, e, n);
-        System.out.print("CipherText : ");
-        for (int i : ctext) {
-            System.out.print(i);
-        }
-        String decText = rsaDecrypt(ctext, d, n);
-
-        System.out.println("\nDecrypted Text : " + decText);
-        sc.close();
-    }
 }
