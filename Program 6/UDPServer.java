@@ -1,25 +1,32 @@
-import java.util.*;
 import java.net.*;
+public class UDPS
+{
+    public static void main(String args[]) throws Exception 
+    {
+        DatagramSocket serverSock= new DatagramSocket(9884);
 
-public class UDPServer {
-    public static void main(String[] args) throws Exception {
-        Scanner sc = new Scanner(System.in);
-        DatagramSocket datasock = new DatagramSocket();
-        InetAddress clientAddr = InetAddress.getByName("0.0.0.0");
-        DatagramPacket dataPack;
-        byte[] buffer;
-        System.out.println("Enter the Message : ");
-        while (true) {
-            String msg = sc.nextLine();
-            buffer = msg.getBytes();
-            dataPack = new DatagramPacket(buffer, buffer.length, clientAddr, 6000);
-            datasock.send(dataPack);
-            if (msg.equalsIgnoreCase("exit")) {
-                System.out.println("THANK YOU");
-                break;
-            }
-        }
-        sc.close();
-        datasock.close();
+        System.out.println("Server is Ready for the client");
+
+        byte[] recvData = new byte[1024];
+        byte[] sendData = new byte[1024];
+
+        while (true) 
+        {
+            DatagramPacket recvPack = new DatagramPacket(recvData, recvData.length);
+            serverSock.receive(recvPack);
+
+            String sentence = new String(recvPack.getData());
+            System.out.println("RECEIVED: " + sentence);
+
+            InetAddress ipAdd = recvPack.getAddress();
+            int port = recvPack.getPort();
+
+            String capitalizedSentence = sentence.toUpperCase();
+            sendData = capitalizedSentence.getBytes();
+
+            DatagramPacket sendPack = new DatagramPacket(sendData, sendData.length, ipAdd, port);
+            serverSock.send(sendPack);
+
+        }           
     }
 }
